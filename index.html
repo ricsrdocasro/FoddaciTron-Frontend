@@ -682,26 +682,18 @@
             const text = EL.input.value;
             if (!text.trim()) return;
 
-            // --- AQUI COMEÇA A MÁGICA DO DEDO ---
+            // --- EFEITOS VISUAIS ---
             const originalBtnText = EL.btn.innerText;
-            
-            // 1. Troca o texto pela imagem
-            // Se você ainda não tiver a imagem, use o emoji 🖕 no lugar do <img...>
             EL.btn.innerHTML = '<img src="logo.png" class="dedo-icon" alt="🖕">'; 
-            
-            // 2. Adiciona a classe de estilo
             EL.btn.classList.add('fuck-mode');
-
-            // 3. Agenda a volta ao normal (1.5 segundos)
             setTimeout(() => {
-                EL.btn.innerHTML = originalBtnText; // Volta "ENVIAR"
-                EL.btn.classList.remove('fuck-mode'); // Tira o preto
+                EL.btn.innerHTML = originalBtnText; 
+                EL.btn.classList.remove('fuck-mode'); 
             }, 1500);
-            // -------------------------------------
 
+            // --- PREPARAÇÃO ---
             isBold = false;
             isItalic = false;
-
             charQueue = [];
             activeTyperId++; 
             const currentId = activeTyperId;
@@ -712,18 +704,34 @@
             EL.input.value = '';
             playSound('send');
 
-            // PLACEHOLDERS / LOADING 
+            // --- LOADING ---
             const randomLoading = LOADING_PHRASES[Math.floor(Math.random() * LOADING_PHRASES.length)];
             const uiElements = renderMessageHTML(randomLoading, 'bot');
             
             const fullTextBuffer = { val: "" };
             let isFirstChunk = true;
 
+            // --- PREPARA O HISTÓRICO PARA O BACKEND ---
+            // Pega a sessão atual da memória
+            // Mapeia 'bot' -> 'assistant' e 'user' -> 'user'
+            // Remove a última mensagem que acabamos de adicionar (user) para não duplicar, 
+            // pois ela já vai no campo 'message' principal, ou manda tudo dependendo da lógica.
+            // Aqui vamos mandar o histórico ANTERIOR à pergunta atual.
+            
+            const rawHistory = currentSession.slice(0, -1); // Tira a msg atual
+            const formattedHistory = rawHistory.map(msg => ({
+                role: msg.sender === 'bot' ? 'assistant' : 'user',
+                content: msg.text
+            }));
+
             try {
                 const response = await fetch(API_URL, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ message: text })
+                    body: JSON.stringify({ 
+                        message: text,
+                        history: formattedHistory // <--- ENVIA O HISTÓRICO AQUI
+                    })
                 });
 
                 if (!response.ok) throw new Error("Backend Error");
