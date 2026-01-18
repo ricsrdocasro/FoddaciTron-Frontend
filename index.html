@@ -2,7 +2,7 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>FODDACITRON /// SYSTEM_OVERRIDE</title>
     <style>
         /* --- IMPORTS & VARS --- */
@@ -33,16 +33,6 @@
         .channel-logo { max-width: 100%; height: auto; max-height: 100px; filter: drop-shadow(4px 4px 0 black); transition: transform 0.2s; }
         .channel-logo:hover { transform: scale(1.1) rotate(-5deg); cursor: pointer; }
 
-        /* --- SIDEBAR STATUS WIDGET (NOVO) --- */
-        .sidebar-widget {
-            background: black; color: var(--accent-green); padding: 15px; border-bottom: var(--border-black);
-            font-family: 'VT323', monospace; font-size: 1.1rem; display: flex; flex-direction: column; gap: 5px;
-        }
-        .status-row { display: flex; justify-content: space-between; }
-        #quota-display.warning { color: #ffcc00; }
-        #quota-display.danger { color: #ff4444; animation: blink 1s infinite; }
-        @keyframes blink { 50% { opacity: 0.5; } }
-
         .history-panel { flex: 1; display: flex; flex-direction: column; overflow: hidden; background: white; }
         .history-header { background: black; color: white; padding: 10px; font-family: 'Archivo Black'; font-size: 0.8rem; text-transform: uppercase; display: flex; justify-content: space-between; align-items: center; }
         .history-list { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 10px; scrollbar-width: thin; scrollbar-color: black #eee; }
@@ -64,11 +54,14 @@
         .message.error { border: 2px solid #ff4444 !important; background-color: #ffe6e6 !important; color: #cc0000 !important; box-shadow: 6px 6px 0 0 #550000 !important; }
         .message b, .message strong { color: white; background: var(--accent-pink); font-weight: 900; padding: 0 4px; box-shadow: 2px 2px 0 black; transform: rotate(-1deg); display: inline-block; }
         .message i, .message em { font-family: 'VT323', monospace; font-size: 1.2rem; color: var(--accent-purple); background: rgba(0,0,0,0.05); padding: 0 5px; border-bottom: 2px solid var(--accent-purple); font-style: normal; }
+        
         .message.bot { align-self: flex-start; background: #ffffff; box-shadow: 6px 6px 0 0 black; border-radius: 0; margin-left: 50px; border-left: 10px solid black; }
         .bot-icon { position: absolute; top: -50px; left: -60px; width: 80px; height: 80px; object-fit: contain; image-rendering: pixelated; filter: drop-shadow(5px 5px 0 black); z-index: 10; transition: transform 0.1s; }
         .bot-icon:hover { transform: scale(1.2) rotate(10deg); }
+        
         .message.user { align-self: flex-end; background: black; color: var(--bg-color); box-shadow: -6px 6px 0 0 var(--accent-green); border-radius: 0; border: 3px solid var(--bg-color); }
         .message.user b { background: var(--bg-color); color: black; box-shadow: 2px 2px 0 white; }
+        
         .input-area { border-top: var(--border-black); padding: 15px; background: var(--bg-color); display: flex; gap: 10px; }
         input { flex: 1; border: var(--border-black); padding: 15px; font-family: 'Space Mono'; font-weight: bold; outline: none; font-size: 1rem; background: white; }
         input:focus { background: #fffbe6; box-shadow: inset 4px 4px 0 rgba(0,0,0,0.1); }
@@ -78,20 +71,123 @@
         @keyframes pop-up { 0% { transform: scale(0) rotate(-45deg); } 100% { transform: scale(1) rotate(0deg); } }
         button#send-btn:active { transform: translate(4px, 4px); box-shadow: 1px 1px 0 0 black; }
         button#send-btn:hover { background: #4dff73; }
+        
         .group-overlay { position: absolute; bottom: 0; right: 20px; height: 350px; width: auto; z-index: 0; pointer-events: none; filter: drop-shadow(8px -8px 0 rgba(0,0,0,1)) contrast(1.2) saturate(1.2); opacity: 0.9; transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); transform: scaleX(-1); }
         .shake-active ~ .group-overlay { transform: translateY(-20px) scale(1.05) scaleX(-1); }
-        @media (max-width: 1000px) { .group-overlay { height: 150px; right: -20px; opacity: 0.5; } }
+
+        /* --- DESKTOP HUD --- */
+        .system-hud {
+            position: fixed; bottom: 20px; left: 20px; width: 300px;
+            background: black; border: 3px solid var(--accent-green);
+            box-shadow: 8px 8px 0 rgba(0,0,0,0.8); padding: 10px;
+            z-index: 1500; font-family: 'VT323', monospace;
+            display: flex; flex-direction: column; gap: 8px;
+        }
+        .hud-row { display: flex; justify-content: space-between; align-items: center; color: var(--accent-green); font-size: 1.1rem; border-bottom: 1px dashed #333; padding-bottom: 4px; }
+        .hud-btn { background: var(--accent-green); color: black; border: none; font-family: 'Space Mono', monospace; font-weight: bold; text-transform: uppercase; cursor: pointer; padding: 5px; text-align: center; font-size: 0.9rem; margin-top: 5px; transition: all 0.2s; }
+        .hud-btn:hover { background: white; box-shadow: 0 0 10px white; }
+        #quota-display.warning { color: #ffcc00; }
+        #quota-display.danger { color: #ff4444; animation: blink 1s infinite; }
+        @keyframes blink { 50% { opacity: 0.5; } }
+        
+        /* HIDE HAMBURGER ON DESKTOP */
+        .hamburger { display: none; }
+
+        /* --- CHANGELOG MODAL --- */
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.85); z-index: 2000; justify-content: center; align-items: center; backdrop-filter: blur(2px); }
+        .modal-overlay.open { display: flex; }
+        .modal-box { width: 90%; max-width: 600px; max-height: 80vh; background: var(--bg-color); border: var(--border-black); box-shadow: 15px 15px 0 black; display: flex; flex-direction: column; animation: pop-up 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        .modal-header { background: black; color: white; padding: 15px; font-family: 'Archivo Black'; display: flex; justify-content: space-between; align-items: center; }
+        .close-modal { cursor: pointer; color: var(--accent-pink); font-size: 1.5rem; }
+        .modal-content { padding: 20px; overflow-y: auto; font-family: 'Space Mono'; font-size: 0.85rem; background: repeating-linear-gradient(0deg, transparent, transparent 19px, #e5e5f7 20px); }
+        .log-entry { margin-bottom: 25px; position: relative; }
+        .log-entry h3 { background: black; color: var(--accent-green); display: inline-block; padding: 5px 10px; margin: 0 0 10px 0; font-family: 'VT323'; font-size: 1.4rem; transform: rotate(-1deg); box-shadow: 4px 4px 0 rgba(0,0,0,0.2); }
+        .log-entry ul { padding-left: 20px; margin: 0; list-style-type: square; }
+        .log-entry li { margin-bottom: 5px; line-height: 1.4; }
+        .version-tag { position: absolute; right: 0; top: 0; background: var(--accent-pink); color: white; padding: 2px 6px; font-weight: bold; font-size: 0.7rem; transform: rotate(2deg); }
+
+        /* --- MOBILE OPTIMIZATION --- */
         @media (max-width: 768px) {
-            main { flex-direction: column; padding: 10px; gap: 10px; }
-            .sidebar { width: 100%; height: auto; flex-direction: column; }
-            .logo-area { width: 100%; padding: 10px; border-bottom: var(--border-black); border-right: none; }
-            .history-panel { display: none; } 
-            .sticker { display: none; } 
-            .message.bot { margin-left: 40px; font-size: 0.9rem; }
-            .bot-icon { width: 50px; height: 50px; top: -30px; left: -45px; }
-            button#send-btn { padding: 0 15px; font-size: 0.9rem; }
-            .group-overlay { display: none; }
-            .sidebar-widget { flex-direction: row; justify-content: space-between; font-size: 0.9rem; }
+            /* 1. HIDE DECORATIONS */
+            header, .sticker, .group-overlay, .grid-bg, .logo-area { display: none !important; }
+
+            /* 2. LAYOUT FIXES */
+            body { height: 100dvh; display: flex; flex-direction: column; overflow: hidden; }
+            main { 
+                flex: 1; width: 100%; 
+                padding: 60px 0 0 0; /* Pushes chat down so HUD doesn't cover it */
+                margin: 0; gap: 0; flex-direction: column; 
+            }
+            
+            /* 3. TOP HUD BAR (Fixed Layout) */
+            .system-hud {
+                position: fixed; top: 0; left: 0; width: 100%; height: 50px;
+                background: black; border: none; border-bottom: 3px solid var(--accent-green);
+                
+                /* FORCE SINGLE ROW */
+                display: flex !important; 
+                flex-direction: row !important;
+                flex-wrap: nowrap !important;
+                justify-content: space-between; 
+                align-items: center;
+                gap: 5px;
+                
+                padding: 0 10px; z-index: 10000;
+                box-shadow: none;
+            }
+
+            /* Make Hamburger Visible on Mobile & Fixed Size */
+            .hamburger { 
+                display: flex !important; 
+                width: 35px; height: 35px; 
+                align-items: center; justify-content: center;
+                margin: 0; flex-shrink: 0;
+                border: 1px solid var(--accent-green);
+            }
+
+            /* Fix Stats Layout */
+            .hud-row { 
+                border: none; padding: 0; 
+                font-size: 0.75rem; 
+                display: flex; gap: 3px; color: var(--accent-green);
+                white-space: nowrap; 
+            }
+            .stats-container {
+                display: flex; gap: 8px; align-items: center;
+                overflow: hidden; text-overflow: ellipsis;
+            }
+
+            /* Fix Logs Button */
+            .hud-btn { 
+                margin: 0; padding: 4px 8px; font-size: 0.8rem; 
+                white-space: nowrap; flex-shrink: 0;
+            }
+
+            /* 4. SLIDE-OUT SIDEBAR */
+            .sidebar {
+                display: flex !important; flex-direction: column;
+                position: fixed; top: 50px; left: 0; bottom: 0;
+                width: 85%; max-width: 300px;
+                background: white; border-right: 3px solid black;
+                box-shadow: none; transform: translateX(-100%);
+                transition: transform 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+                z-index: 9999; padding: 0;
+            }
+            .sidebar.open { transform: translateX(0); box-shadow: 0 0 0 1000px rgba(0,0,0,0.7); }
+
+            .history-panel { display: flex; flex: 1; border: none; } 
+            .history-list { padding: 10px; }
+            .new-chat-btn { padding: 15px; font-size: 1rem; }
+
+            /* 5. CHAT TWEAKS */
+            .chat-interface { width: 100%; height: 100%; border: none; box-shadow: none; display: flex; flex-direction: column; }
+            .chat-header { flex-shrink: 0; padding: 10px; font-size: 0.9rem; }
+            .messages-area { padding: 20px 15px; gap: 20px; background-size: 10px 10px; }
+            .message { max-width: 90%; font-size: 0.95rem; padding: 12px; }
+            .message.bot { margin-left: 10px; border-left-width: 5px; }
+            .bot-icon { width: 40px; height: 40px; top: -25px; left: -10px; }
+            .input-area { padding: 10px; background: var(--bg-color); border-top: 3px solid black; flex-shrink: 0; z-index: 100; }
+            .modal-box { width: 95%; max-height: 85vh; }
         }
     </style>
 </head>
@@ -105,21 +201,25 @@
         <div class="marquee">/// FODDACITRON V.2.2 /// SISTEMA DE COTA ATIVO /// HASHED IP SECURE ///</div>
     </header>
 
+    <div class="system-hud">
+        <div class="hud-btn hamburger" onclick="toggleMobileMenu()">[≡]</div>
+
+        <div class="stats-container">
+            <div class="hud-row">
+                <span>NET:</span><span id="connection-status">...</span>
+            </div>
+            <div class="hud-row">
+                <span>| COTA:</span><span id="quota-display">--/--</span>
+            </div>
+        </div>
+        
+        <div class="hud-btn" onclick="toggleModal(true)">LOGS</div>
+    </div>
+
     <main id="main-container">
-        <aside class="sidebar">
+        <aside class="sidebar" id="mobile-sidebar">
             <div class="logo-area">
                 <img src="logo.png" class="channel-logo" alt="Logo" onclick="playSound('pimba')">
-            </div>
-
-            <div class="sidebar-widget">
-                <div class="status-row">
-                    <span>STATUS:</span>
-                    <span id="connection-status">CONECTANDO...</span>
-                </div>
-                <div class="status-row">
-                    <span>COTA DIÁRIA:</span>
-                    <span id="quota-display">...</span>
-                </div>
             </div>
 
             <div class="history-panel">
@@ -146,6 +246,48 @@
             </div>
         </section>
     </main>
+
+    <div class="modal-overlay" id="changelog-modal" onclick="if(event.target === this) toggleModal(false)">
+        <div class="modal-box">
+            <div class="modal-header">
+                <span>/// KERNEL_UPDATES ///</span>
+                <span class="close-modal" onclick="toggleModal(false)">[X]</span>
+            </div>
+            <div class="modal-content">
+
+                <div class="log-entry">
+                    <h3>DUAL_BRAIN_ARCH</h3>
+                    <span class="version-tag">LATEST</span>
+                    <ul>
+                        <li><b>[IA]</b> DeepSeek-V3.2 integrado como "Roteador" (Decide Busca vs. Chat).</li>
+                        <li><b>[DB]</b> Download automático dos bancos Chroma via Hugging Face.</li>
+                        <li><b>[FIX]</b> Permissões de escrita Docker (chmod/chown) corrigidas para usuário não-root.</li>
+                    </ul>
+                </div>
+                
+                <div class="log-entry">
+                    <h3>SECURITY_PATCH</h3>
+                    <span class="version-tag">V2.0</span>
+                    <ul>
+                        <li><b>[REDE]</b> Implementado Rate Limiting por IP (5 req/min) via SlowAPI.</li>
+                        <li><b>[COTA]</b> Sistema de Cota Diária ativado (10 msgs/dia) para evitar abuso.</li>
+                        <li><b>[PRIVACIDADE]</b> Hashing de IP (SHA256) implementado para anonimato do usuário.</li>
+                        <li><b>[INTERFACE]</b> Nova Barra de Status HUD & Visualização de Erro 429.</li>
+                    </ul>
+                </div>
+
+                <div class="log-entry">
+                    <h3>CORTEX_MEMORY_UPGRADE</h3>
+                    <span class="version-tag">V1.0</span>
+                    <ul>
+                        <li><b>[MEM]</b> Memória de conversação de curto prazo instalada (Janela Deslizante: 6 msgs).</li>
+                        <li><b>[RLHF]</b> Inibidor de Alucinação ativado (Threshold de similaridade < 1.45).</li>
+                        <li><b>[CORE]</b> Prompt do DeepSeek refatorado para incluir contexto histórico.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <script>
         const API_URL = "https://ricsrdocasro-foddacitronbackend.hf.space";
@@ -184,19 +326,19 @@
                 }
             } catch (error) {
                 console.error("Erro ao buscar cota:", error);
-                EL.quota.innerText = "OFFLINE";
-                EL.status.innerText = "🔴 DESCONECTADO";
+                EL.quota.innerText = "ERR";
+                EL.status.innerText = "🔴";
             }
         }
 
         function updateUsageVisuals(count, limit) {
             EL.quota.innerText = `${count}/${limit}`;
             EL.quota.className = ""; 
-            EL.status.innerText = "🟢 ONLINE";
+            EL.status.innerText = "🟢";
 
             if (count >= limit) {
                 EL.quota.classList.add('danger');
-                EL.status.innerText = "⛔ BLOQUEADO";
+                EL.status.innerText = "⛔";
             } else if (count >= limit * 0.8) {
                 EL.quota.classList.add('warning');
             }
@@ -234,9 +376,22 @@
             const newId = Date.now(); storageData.currentId = newId;
             storageData.sessions[newId] = [{ sender: 'bot', text: 'Nova run. Sem save state.' }];
             saveStorage(); currentSession = storageData.sessions[newId]; renderHistoryList(); loadCurrentSession(); playSound('reset');
+            // Close mobile menu if open
+            if (window.innerWidth <= 768) {
+                const sidebar = document.getElementById('mobile-sidebar');
+                if(sidebar) sidebar.classList.remove('open');
+            }
         }
 
-        function switchToSession(id) { storageData.currentId = id; currentSession = storageData.sessions[id]; saveStorage(); renderHistoryList(); loadCurrentSession(); }
+        function switchToSession(id) { 
+            storageData.currentId = id; currentSession = storageData.sessions[id]; saveStorage(); renderHistoryList(); loadCurrentSession(); 
+            // Close mobile menu if open
+            if (window.innerWidth <= 768) {
+                const sidebar = document.getElementById('mobile-sidebar');
+                if(sidebar) sidebar.classList.remove('open');
+            }
+        }
+
         function loadCurrentSession() {
             EL.msgs.innerHTML = ''; currentSession.forEach(msg => renderMessageHTML(msg.text, msg.sender));
             setTimeout(() => EL.msgs.scrollTop = EL.msgs.scrollHeight, 100); EL.headerTitle.innerText = "RUN_ID_" + storageData.currentId.toString().slice(-4);
@@ -316,6 +471,31 @@
                 }
             } catch (error) { console.error(error); uiElements.textSpan.innerText = "[ERRO: O VITO TROPEÇOU NO SERVIDOR]"; stopTalkingAnimation(); toggleInput(true); }
         }
+
+        // --- MODAL CONTROL ---
+        function toggleModal(show) {
+            const modal = document.getElementById('changelog-modal');
+            if (show) {
+                modal.classList.add('open');
+                playSound('pimba'); 
+            } else {
+                modal.classList.remove('open');
+            }
+        }
+        
+        // --- MOBILE MENU ---
+        function toggleMobileMenu() {
+            const sidebar = document.getElementById('mobile-sidebar');
+            if(sidebar) {
+                sidebar.classList.toggle('open');
+                playSound('pimba');
+            }
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === "Escape") toggleModal(false);
+        });
+
         EL.btn.addEventListener('click', handleSend); EL.input.addEventListener('keypress', (e) => { if (e.key === 'Enter') handleSend(); });
     </script>
 </body>
